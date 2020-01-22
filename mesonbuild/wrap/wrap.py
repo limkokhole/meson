@@ -18,6 +18,7 @@ import urllib.request
 import urllib.error
 import urllib.parse
 import os
+import platform
 import hashlib
 import shutil
 import tempfile
@@ -299,6 +300,11 @@ class Resolver:
             if self.wrap.values.get('clone-recursive', '').lower() == 'true':
                 verbose_git(['submodule', 'update', '--init', '--checkout', '--recursive', *depth_option],
                             self.dirname, check=True)
+                # git submodule update --recursive calls git clone recursively,
+                # and on Windows it will undo the console mode we set in mlog
+                # and cause ANSI colors to stop working. Set it again.
+                if platform.system().lower() == 'windows':
+                    mlog._windows_ansi()
             push_url = self.wrap.values.get('push-url')
             if push_url:
                 verbose_git(['remote', 'set-url', '--push', 'origin', push_url], self.dirname, check=True)
