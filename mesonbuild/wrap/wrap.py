@@ -53,6 +53,9 @@ def quiet_git(cmd: T.List[str], workingdir: str) -> T.Tuple[bool, str]:
     if not GIT:
         return False, 'Git program not found.'
     pc = subprocess.run([GIT, '-C', workingdir] + cmd, universal_newlines=True,
+                        # Redirect stdin to DEVNULL otherwise git messes up the
+                        # console and ANSI colors stop working on Windows.
+                        stdin=subprocess.DEVNULL,
                         stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     if pc.returncode != 0:
         return False, pc.stderr
@@ -61,10 +64,11 @@ def quiet_git(cmd: T.List[str], workingdir: str) -> T.Tuple[bool, str]:
 def verbose_git(cmd: T.List[str], workingdir: str, check: bool = False) -> bool:
     if not GIT:
         return False
-    if check:
-        subprocess.check_call([GIT, '-C', workingdir] + cmd)
-        return True
-    return subprocess.run([GIT, '-C', workingdir] + cmd).returncode == 0
+    pc = subprocess.run([GIT, '-C', workingdir] + cmd,
+                        # Redirect stdin to DEVNULL otherwise git messes up the
+                        # console and ANSI colors stop working on Windows.
+                        stdin=subprocess.DEVNULL, check=check)
+    return pc.returncode == 0
 
 def whitelist_wrapdb(urlstr: str) -> urllib.parse.ParseResult:
     """ raises WrapException if not whitelisted subdomain """
